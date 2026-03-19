@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bò 888 - Tra cứu thành viên</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f8fafc; }
+        [v-cloak] { display: none; }
+        .rotate-3 { transform: rotate(3deg); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+    </style>
+</head>
+<body class="text-slate-900 overflow-x-hidden leading-normal">
+    <div id="app" v-cloak class="min-h-screen flex flex-col max-w-md mx-auto bg-white shadow-2xl relative">
+        
+        <!-- MÀN HÌNH LOADING HỆ THỐNG -->
+        <div v-if="isSystemLoading" class="fixed inset-0 bg-white z-[500] flex flex-col items-center justify-center p-6 text-center">
+            <div class="relative mb-6">
+                <div class="w-16 h-16 border-4 border-slate-100 rounded-full"></div>
+                <div class="w-16 h-16 border-4 border-red-800 border-t-transparent rounded-full animate-spin absolute top-0"></div>
+            </div>
+            <p class="font-black text-red-800 uppercase tracking-[0.2em] text-lg animate-pulse">Đang kết nối Bò 888...</p>
+        </div>
+
+        <!-- THÔNG BÁO (TOAST) -->
+        <transition name="fade">
+            <div v-if="notification" class="fixed top-4 left-4 right-4 z-[400] p-4 rounded-2xl shadow-2xl flex items-center gap-3 text-white" :class="notification.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'">
+                <i :data-lucide="notification.type === 'success' ? 'check-circle' : 'alert-triangle'" class="w-6 h-6 shrink-0"></i>
+                <p class="font-bold text-sm leading-tight flex-1">{{ notification.msg }}</p>
+            </div>
+        </transition>
+
+        <!-- MÀN HÌNH TRA CỨU SỐ ĐIỆN THOẠI -->
+        <transition name="fade">
+            <div v-if="!customerData && !isSystemLoading" class="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 bg-red-800 text-white text-center">
+                <div class="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl mb-8 rotate-3">
+                    <span class="text-red-800 font-black text-4xl">888</span>
+                </div>
+                <div class="mb-10">
+                    <h2 class="text-3xl font-black uppercase tracking-tighter mb-2">Thành Viên Bò 888</h2>
+                    <p class="text-red-100 opacity-80 font-bold text-sm">Nhập số điện thoại để tra cứu điểm và hạng</p>
+                </div>
+                
+                <form @submit.prevent="handleLogin" class="w-full space-y-6">
+                    <div class="relative">
+                        <i data-lucide="phone" class="absolute left-5 top-1/2 -translate-y-1/2 text-red-800 w-6 h-6"></i>
+                        <input v-model="phoneInput" type="tel" required inputmode="numeric" placeholder="Số điện thoại của bạn" class="w-full pl-14 pr-6 py-5 rounded-[2rem] bg-white text-slate-900 text-xl font-black focus:ring-4 focus:ring-red-400 focus:outline-none transition-all placeholder:text-slate-300 text-center tracking-widest shadow-xl">
+                    </div>
+                    <button type="submit" class="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black text-lg uppercase tracking-widest shadow-2xl hover:bg-black transition-all active:scale-95">
+                        Tra Cứu Ngay
+                    </button>
+                    <p v-if="errorMsg" class="text-center text-red-200 font-bold bg-red-900/50 p-4 rounded-2xl text-sm border border-red-500/30">{{ errorMsg }}</p>
+                </form>
+            </div>
+        </transition>
+
+        <!-- MÀN HÌNH THÔNG TIN KHÁCH HÀNG -->
+        <transition name="fade">
+            <div v-if="customerData && !isSystemLoading" class="flex-1 flex flex-col bg-slate-50 relative pb-10">
+                <!-- Header -->
+                <div class="bg-red-800 pt-12 pb-24 px-6 rounded-b-[3rem] shadow-lg relative z-10">
+                    <div class="flex justify-between items-center mb-8">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md rotate-3">
+                                <span class="text-red-800 font-black text-lg">888</span>
+                            </div>
+                            <span class="text-white font-black tracking-widest uppercase text-sm opacity-80">Bò 888 - 23 Nguyễn Khuyến</span>
+                        </div>
+                        <button @click="logout" class="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all">
+                            <i data-lucide="log-out" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <p class="text-red-100 font-bold mb-1">Xin chào,</p>
+                        <h2 class="text-3xl font-black text-white leading-tight uppercase tracking-tighter">{{ customerData.name }}</h2>
+                    </div>
+                </div>
+
+                <!-- Thẻ Thông tin chính -->
+                <div class="px-6 -mt-16 relative z-20 space-y-4">
+                    
+                    <!-- Thẻ Hạng & Điểm -->
+                    <div class="bg-white rounded-[2.5rem] p-6 shadow-xl border-2 border-slate-100">
+                        <div class="flex justify-between items-center mb-6 pb-6 border-b border-slate-100">
+                            <div>
+                                <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Hạng thành viên</p>
+                                <span :class="getTierConfigById(customerData.tier || 'NEW').color" class="px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest shadow-sm inline-block">
+                                    {{ getTierConfigById(customerData.tier || 'NEW').name }}
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-1">Tiêu tháng này</p>
+                                <p class="font-black text-slate-800 text-lg">{{ formatSpending(customerData.spendingLast30Days) }}</p>
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <p class="text-xs font-black uppercase text-slate-400 tracking-widest mb-2">Ví điểm hiện tại</p>
+                            <p class="text-4xl sm:text-5xl font-black text-red-700 tracking-tighter">{{ formatCurrency(customerData.points) }}<span class="text-xl text-red-500 ml-1">đ</span></p>
+                            <p class="text-[10px] text-slate-400 font-bold mt-2">Dùng điểm này để thanh toán hóa đơn tiếp theo (áp dụng cả Phở/cơm/lẩu)</p>
+                        </div>
+                    </div>
+
+                    <!-- Thẻ Theo dõi Chu kỳ -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-blue-50 border border-blue-100 p-5 rounded-[2rem] flex flex-col justify-center items-center text-center">
+                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-3 shadow-inner">
+                                <i data-lucide="timer" class="w-5 h-5 font-black"></i>
+                            </div>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-1">Hạn dùng điểm</p>
+                            <p class="font-black text-blue-700 text-xl">Còn {{ getDaysRemaining(customerData.lastResetDate) }} ngày</p>
+                        </div>
+                        
+                        <div class="bg-purple-50 border border-purple-100 p-5 rounded-[2rem] flex flex-col justify-center items-center text-center">
+                            <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-3 shadow-inner">
+                                <i data-lucide="map-pin" class="w-5 h-5 font-black"></i>
+                            </div>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-purple-400 mb-1">Số lần ghé quán</p>
+                            <p class="font-black text-purple-700 text-xl">{{ getVisitsThisCycle(customerData) }} lần <span class="text-xs font-bold opacity-70">/ Chu kỳ</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Nút Góp ý -->
+                    <button @click="showFeedbackModal = true" class="w-full mt-4 bg-slate-900 text-white p-6 rounded-[2rem] shadow-xl flex items-center justify-between hover:bg-black transition-all active:scale-95 group">
+                        <div class="flex items-center gap-4 text-left">
+                            <div class="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="message-square" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-black uppercase tracking-widest text-sm mb-1">Thêm ý kiến khách hàng</h3>
+                                <p class="text-xs text-slate-400 font-bold">Hãy cho Bò 888 biết cảm nhận của bạn</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-6 h-6 text-slate-500 group-hover:text-white transition-colors"></i>
+                    </button>
+                </div>
+            </div>
+        </transition>
+
+        <!-- MODAL GÓP Ý -->
+        <transition name="fade">
+            <div v-if="showFeedbackModal" class="fixed inset-0 z-[500] flex flex-col justify-end bg-slate-900/80 backdrop-blur-sm">
+                <div class="bg-white w-full rounded-t-[3rem] p-6 pb-10 sm:p-8 animate-in slide-in-from-bottom-full duration-300 relative">
+                    <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-8"></div>
+                    <button @click="showFeedbackModal = false" class="absolute top-6 right-6 p-2 bg-slate-100 rounded-full text-slate-500 hover:text-slate-800">
+                        <i data-lucide="x" class="w-5 h-5 font-black"></i>
+                    </button>
+                    
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-[1.2rem] flex items-center justify-center rotate-3">
+                            <i data-lucide="heart" class="w-6 h-6 font-black"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-black text-xl text-slate-800 uppercase tracking-tighter">Gửi Ý Kiến</h3>
+                            <p class="text-xs font-bold text-slate-400">Bò 888 luôn lắng nghe bạn</p>
+                        </div>
+                    </div>
+
+                    <form @submit.prevent="submitFeedback" class="space-y-4">
+                        <textarea v-model="feedbackContent" required placeholder="Ví dụ: Đồ ăn rất ngon, nhân viên nhiệt tình, hay cần cải thiện điểm nào đó..." class="w-full px-5 py-4 rounded-3xl border-2 border-slate-100 focus:border-purple-500 focus:ring-4 focus:ring-purple-50 font-bold text-sm outline-none transition-all shadow-inner min-h-[150px] leading-relaxed resize-none text-slate-800 bg-slate-50"></textarea>
+                        <button type="submit" :disabled="isSubmitting" class="w-full py-5 bg-purple-600 text-white rounded-[2rem] font-black uppercase text-sm tracking-widest shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100">
+                            {{ isSubmitting ? 'Đang gửi...' : 'Gửi Phản Hồi' }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </transition>
+
+    </div>
+
+    <!-- Firebase System -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, doc, updateDoc, onSnapshot, query, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const { createApp, ref, onMounted, nextTick, watch } = Vue;
+
+        // BẮT BUỘC: Sử dụng chung Cấu hình và App ID của hệ thống Bò 888 CRM để đọc cùng 1 nguồn dữ liệu
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnQtUo1Nxq3YDxXp_2P4L1Beqv5JHAYPE",
+            authDomain: "crm-bo-888.firebaseapp.com",
+            projectId: "crm-bo-888",
+            storageBucket: "crm-bo-888.firebasestorage.app",
+            messagingSenderId: "1012577969287",
+            appId: "bo-888-chinh-chu"
+        };
+
+        const appInstance = initializeApp(firebaseConfig);
+        const auth = getAuth(appInstance);
+        const db = getFirestore(appInstance);
+        const APP_ID = 'crm-bo-888-v2'; // Phải khớp với ID của Admin CRM
+        const CYCLE_DAYS = 30;
+
+        // Cấu hình Hạng thành viên
+        const TIERS = {
+            NEW: { id: 'NEW', name: 'Mới', color: 'bg-slate-100 text-slate-700' },
+            SILVER: { id: 'SILVER', name: 'Bạc', color: 'bg-slate-200 text-slate-800' },
+            GOLD: { id: 'GOLD', name: 'Vàng', color: 'bg-yellow-100 text-yellow-800' },
+            DIAMOND: { id: 'DIAMOND', name: 'Kim cương', color: 'bg-blue-100 text-blue-800' }
+        };
+
+        const gmt7Formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: 'numeric', day: 'numeric' });
+
+        createApp({
+            setup() {
+                const isSystemLoading = ref(true);
+                const phoneInput = ref('');
+                const errorMsg = ref('');
+                const customerData = ref(null);
+                const allMembers = ref([]);
+                const notification = ref(null);
+                
+                const showFeedbackModal = ref(false);
+                const feedbackContent = ref('');
+                const isSubmitting = ref(false);
+
+                const notify = (msg, type = 'success') => {
+                    notification.value = { msg, type };
+                    setTimeout(() => notification.value = null, 3000);
+                };
+
+                const getTierConfigById = (tierId) => TIERS[tierId] || TIERS.NEW;
+                const formatCurrency = (val) => (val || 0).toLocaleString('vi-VN');
+                const formatSpending = (val) => {
+                    const amount = val || 0;
+                    if (amount < 1000000) return Math.floor(amount / 1000) + 'K';
+                    return (amount / 1000000).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' triệu';
+                };
+
+                const getDaysDifferenceGMT7 = (dateNow, datePast) => {
+                    try {
+                        const d1Str = gmt7Formatter.format(new Date(dateNow));
+                        const d2Str = gmt7Formatter.format(new Date(datePast));
+                        const d1UTC = new Date(d1Str + ' UTC');
+                        const d2UTC = new Date(d2Str + ' UTC');
+                        return Math.floor((d1UTC - d2UTC) / (1000 * 60 * 60 * 24));
+                    } catch(e) { return 0; }
+                };
+
+                const getDaysRemaining = (date) => {
+                    if (!date) return 0;
+                    const daysPassed = getDaysDifferenceGMT7(new Date(), new Date(date));
+                    return Math.max(0, CYCLE_DAYS - daysPassed);
+                };
+
+                const getVisitsThisCycle = (member) => {
+                    if (!member || !member.history) return 0;
+                    const resetDate = member.lastResetDate ? new Date(member.lastResetDate).getTime() : 0;
+                    return member.history.filter(log => log.type === 'BILL' && new Date(log.date).getTime() >= resetDate).length;
+                };
+
+                onMounted(() => {
+                    // Đăng nhập vô danh để có quyền đọc dữ liệu theo Rule lớp 1
+                    onAuthStateChanged(auth, async (u) => {
+                        if (!u) {
+                            try {
+                                await signInAnonymously(auth);
+                            } catch (e) {
+                                notify("Lỗi kết nối máy chủ!", "error");
+                                isSystemLoading.value = false;
+                            }
+                        } else {
+                            // Tải dữ liệu toàn bộ member và lắng nghe thay đổi
+                            onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'members'), (snap) => {
+                                allMembers.value = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                isSystemLoading.value = false;
+                                
+                                // Nếu khách đang đăng nhập, cập nhật lại data theo thời gian thực (realtime)
+                                if (customerData.value) {
+                                    const updated = allMembers.value.find(m => m.id === customerData.value.id);
+                                    if (updated) {
+                                        customerData.value = updated;
+                                    }
+                                }
+                            }, (error) => {
+                                console.error(error);
+                                notify("Mất mạng hoặc lỗi kết nối!", "error");
+                                isSystemLoading.value = false;
+                            });
+                        }
+                    });
+                });
+
+                watch([customerData, showFeedbackModal, isSystemLoading], () => {
+                    nextTick(() => lucide.createIcons());
+                });
+
+                const handleLogin = () => {
+                    errorMsg.value = "";
+                    if (!phoneInput.value) return;
+                    
+                    const cleanPhone = phoneInput.value.replace(/\D/g, "");
+                    const found = allMembers.value.find(m => (m.phone || "").replace(/\D/g, "") === cleanPhone);
+                    
+                    if (found) {
+                        customerData.value = found;
+                        phoneInput.value = "";
+                    } else {
+                        errorMsg.value = "Số điện thoại chưa được đăng ký thẻ thành viên tại Bò 888!";
+                    }
+                };
+
+                const logout = () => {
+                    customerData.value = null;
+                    errorMsg.value = "";
+                };
+
+                const submitFeedback = async () => {
+                    if (!feedbackContent.value.trim() || !customerData.value) return;
+                    isSubmitting.value = true;
+                    
+                    const now = new Date().toISOString();
+                    const newFb = { date: now, content: feedbackContent.value.trim() };
+                    const updatedFeedbacks = [...(customerData.value.feedbacks || []), newFb];
+
+                    try {
+                        await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'members', customerData.value.id), {
+                            feedbacks: updatedFeedbacks
+                        });
+                        
+                        notify('Cảm ơn bạn đã đóng góp ý kiến!', 'success');
+                        showFeedbackModal.value = false;
+                        feedbackContent.value = '';
+                    } catch (e) {
+                        notify('Có lỗi xảy ra, vui lòng thử lại sau', 'error');
+                    } finally {
+                        isSubmitting.value = false;
+                    }
+                };
+
+                return {
+                    isSystemLoading, phoneInput, errorMsg, customerData, notification,
+                    showFeedbackModal, feedbackContent, isSubmitting,
+                    handleLogin, logout, submitFeedback,
+                    getTierConfigById, formatCurrency, formatSpending, getDaysRemaining, getVisitsThisCycle
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
