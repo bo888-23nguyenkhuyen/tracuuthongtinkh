@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bò 888 - Tra cứu thành viên</title>
+    <title>Bò 888 - Tra cứu & Đăng ký thành viên</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Vue 3 -->
@@ -19,6 +19,8 @@
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .scroll-hide::-webkit-scrollbar { display: none; }
+        .scroll-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="text-slate-900 overflow-x-hidden leading-normal">
@@ -35,7 +37,7 @@
 
         <!-- THÔNG BÁO (TOAST) -->
         <transition name="fade">
-            <div v-if="notification" class="fixed top-4 left-4 right-4 z-[400] p-4 rounded-2xl shadow-2xl flex items-center gap-3 text-white" :class="notification.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'">
+            <div v-if="notification" class="fixed top-4 left-4 right-4 z-[700] p-4 rounded-2xl shadow-2xl flex items-center gap-3 text-white" :class="notification.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'">
                 <i :data-lucide="notification.type === 'success' ? 'check-circle' : 'alert-triangle'" class="w-6 h-6 shrink-0"></i>
                 <p class="font-bold text-sm leading-tight flex-1">{{ notification.msg }}</p>
             </div>
@@ -49,7 +51,7 @@
                 </div>
                 <div class="mb-10">
                     <h2 class="text-3xl font-black uppercase tracking-tighter mb-2">Thành Viên Bò 888</h2>
-                    <p class="text-red-100 opacity-80 font-bold text-sm">Nhập số điện thoại để tra cứu điểm và hạng</p>
+                    <p class="text-red-100 opacity-80 font-bold text-sm">Nhập số điện thoại để tra cứu hoặc đăng ký</p>
                 </div>
                 
                 <form @submit.prevent="handleLogin" class="w-full space-y-6">
@@ -58,7 +60,7 @@
                         <input v-model="phoneInput" type="tel" required inputmode="numeric" placeholder="Số điện thoại của bạn" class="w-full pl-14 pr-6 py-5 rounded-[2rem] bg-white text-slate-900 text-xl font-black focus:ring-4 focus:ring-red-400 focus:outline-none transition-all placeholder:text-slate-300 text-center tracking-widest shadow-xl">
                     </div>
                     <button type="submit" class="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black text-lg uppercase tracking-widest shadow-2xl hover:bg-black transition-all active:scale-95">
-                        Tra Cứu Ngay
+                        Kiểm Tra Ngay
                     </button>
                     <p v-if="errorMsg" class="text-center text-red-200 font-bold bg-red-900/50 p-4 rounded-2xl text-sm border border-red-500/30">{{ errorMsg }}</p>
                 </form>
@@ -109,7 +111,7 @@
                         <div class="text-center">
                             <p class="text-xs font-black uppercase text-slate-400 tracking-widest mb-2">Ví điểm hiện tại</p>
                             <p class="text-4xl sm:text-5xl font-black text-red-700 tracking-tighter">{{ formatCurrency(customerData.points) }}<span class="text-xl text-red-500 ml-1">đ</span></p>
-                            <p class="text-[10px] text-slate-400 font-bold mt-2">Dùng điểm này để thanh toán hóa đơn tiếp theo (áp dụng cả Phở/cơm/lẩu)</p>
+                            <p class="text-[10px] text-slate-400 font-bold mt-2 italic">Dùng điểm này để thanh toán hóa đơn tiếp theo (áp dụng cả Phở/cơm/lẩu)</p>
                         </div>
                     </div>
 
@@ -149,6 +151,66 @@
             </div>
         </transition>
 
+        <!-- MODAL ĐĂNG KÝ THÀNH VIÊN MỚI -->
+        <transition name="fade">
+            <div v-if="showRegisterModal" class="fixed inset-0 z-[600] flex flex-col justify-end bg-slate-900/90 backdrop-blur-md">
+                <div class="bg-white w-full max-h-[90vh] overflow-y-auto scroll-hide rounded-t-[3rem] p-6 pb-12 sm:p-8 animate-in slide-in-from-bottom-full duration-300 relative shadow-2xl">
+                    <div class="sticky top-0 bg-white pt-2 pb-4 z-10 border-b border-slate-50">
+                        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
+                        <button @click="showRegisterModal = false" class="absolute top-2 right-0 p-2 bg-slate-100 rounded-full text-slate-500 hover:text-slate-800">
+                            <i data-lucide="x" class="w-5 h-5 font-black"></i>
+                        </button>
+                        <h3 class="font-black text-2xl text-slate-800 uppercase tracking-tighter text-center">Đăng Ký Thành Viên</h3>
+                    </div>
+                    
+                    <div class="mt-6 mb-8 text-center">
+                        <p class="text-sm font-bold text-slate-500 mb-6">Chào mừng bạn mới với SĐT <span class="text-red-600 font-black">{{ phoneInput }}</span></p>
+                        
+                        <!-- Bảng Ưu đãi Hạng -->
+                        <div class="bg-slate-50 rounded-[2rem] p-5 mb-8 border border-slate-100 text-left">
+                            <h4 class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-4 flex items-center gap-2">
+                                <i data-lucide="gift" class="w-3 h-3"></i> Quyền lợi theo hạng (Chu kỳ 30 ngày)
+                            </h4>
+                            <div class="space-y-3">
+                                <div v-for="t in tierBenefits" :key="t.id" class="flex items-center justify-between p-3 rounded-2xl bg-white shadow-sm border border-slate-50">
+                                    <div class="flex items-center gap-3">
+                                        <span :class="t.color" class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black uppercase">{{ t.name[0] }}</span>
+                                        <div>
+                                            <p class="text-xs font-black text-slate-800">{{ t.name }} <span class="text-[10px] text-slate-400 font-normal">({{ t.cond }})</span></p>
+                                            <p class="text-[10px] font-bold text-emerald-600">Tích {{ t.percent }}% tổng bill</p>
+                                        </div>
+                                    </div>
+                                    <i data-lucide="sparkles" class="w-4 h-4 text-yellow-400"></i>
+                                </div>
+                            </div>
+
+                            <!-- Quy tắc tóm tắt -->
+                            <div class="mt-5 pt-5 border-t border-dashed border-slate-200 space-y-2">
+                                <div class="flex gap-2 text-[10px] font-bold text-slate-500">
+                                    <i data-lucide="info" class="w-3 h-3 shrink-0 text-blue-500"></i>
+                                    <p>Điểm quy đổi thành tiền mặt, trừ trực tiếp vào bill tiếp theo.</p>
+                                </div>
+                                <div class="flex gap-2 text-[10px] font-bold text-slate-500">
+                                    <i data-lucide="refresh-cw" class="w-3 h-3 shrink-0 text-red-500"></i>
+                                    <p>Reset điểm và xét lại hạng dựa trên chi tiêu sau mỗi 30 ngày.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form @submit.prevent="handleRegister" class="space-y-4">
+                        <div class="relative">
+                            <i data-lucide="user" class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                            <input v-model="registerName" type="text" required placeholder="Họ và tên của bạn" class="w-full pl-14 pr-6 py-5 rounded-3xl border-2 border-slate-100 focus:border-red-600 focus:ring-4 focus:ring-red-50 font-black text-lg outline-none transition-all shadow-inner bg-slate-50 text-slate-800">
+                        </div>
+                        <button type="submit" :disabled="isRegistering" class="w-full py-5 bg-red-600 text-white rounded-[2rem] font-black uppercase text-lg tracking-widest shadow-xl shadow-red-100 hover:bg-red-700 transition-all active:scale-95 disabled:opacity-50">
+                            {{ isRegistering ? 'Đang tạo thẻ...' : 'Tham Gia Ngay' }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </transition>
+
         <!-- MODAL GÓP Ý -->
         <transition name="fade">
             <div v-if="showFeedbackModal" class="fixed inset-0 z-[500] flex flex-col justify-end bg-slate-900/80 backdrop-blur-sm">
@@ -170,7 +232,7 @@
 
                     <form @submit.prevent="submitFeedback" class="space-y-4">
                         <textarea v-model="feedbackContent" required placeholder="Ví dụ: Đồ ăn rất ngon, nhân viên nhiệt tình, hay cần cải thiện điểm nào đó..." class="w-full px-5 py-4 rounded-3xl border-2 border-slate-100 focus:border-purple-500 focus:ring-4 focus:ring-purple-50 font-bold text-sm outline-none transition-all shadow-inner min-h-[150px] leading-relaxed resize-none text-slate-800 bg-slate-50"></textarea>
-                        <button type="submit" :disabled="isSubmitting" class="w-full py-5 bg-purple-600 text-white rounded-[2rem] font-black uppercase text-sm tracking-widest shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all active:scale-95 disabled:opacity-50 disabled:scale-100">
+                        <button type="submit" :disabled="isSubmitting" class="w-full py-5 bg-purple-600 text-white rounded-[2rem] font-black uppercase text-sm tracking-widest shadow-lg shadow-purple-200 hover:bg-purple-700 transition-all active:scale-95 disabled:opacity-50">
                             {{ isSubmitting ? 'Đang gửi...' : 'Gửi Phản Hồi' }}
                         </button>
                     </form>
@@ -183,12 +245,11 @@
     <!-- Firebase System -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, doc, updateDoc, onSnapshot, query, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, updateDoc, onSnapshot, query, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const { createApp, ref, onMounted, nextTick, watch } = Vue;
 
-        // BẮT BUỘC: Sử dụng chung Cấu hình và App ID của hệ thống Bò 888 CRM để đọc cùng 1 nguồn dữ liệu
         const firebaseConfig = {
             apiKey: "AIzaSyBnQtUo1Nxq3YDxXp_2P4L1Beqv5JHAYPE",
             authDomain: "crm-bo-888.firebaseapp.com",
@@ -201,15 +262,14 @@
         const appInstance = initializeApp(firebaseConfig);
         const auth = getAuth(appInstance);
         const db = getFirestore(appInstance);
-        const APP_ID = 'crm-bo-888-v2'; // Phải khớp với ID của Admin CRM
+        const APP_ID = 'crm-bo-888-v2';
         const CYCLE_DAYS = 30;
 
-        // Cấu hình Hạng thành viên
         const TIERS = {
-            NEW: { id: 'NEW', name: 'Mới', color: 'bg-slate-100 text-slate-700' },
-            SILVER: { id: 'SILVER', name: 'Bạc', color: 'bg-slate-200 text-slate-800' },
-            GOLD: { id: 'GOLD', name: 'Vàng', color: 'bg-yellow-100 text-yellow-800' },
-            DIAMOND: { id: 'DIAMOND', name: 'Kim cương', color: 'bg-blue-100 text-blue-800' }
+            NEW: { id: 'NEW', name: 'Mới', color: 'bg-slate-100 text-slate-700', cond: 'Dưới 700K', percent: 1 },
+            SILVER: { id: 'SILVER', name: 'Bạc', color: 'bg-slate-300 text-slate-800', cond: 'Từ 700K', percent: 2 },
+            GOLD: { id: 'GOLD', name: 'Vàng', color: 'bg-yellow-400 text-white', cond: 'Từ 7 Triệu', percent: 3 },
+            DIAMOND: { id: 'DIAMOND', name: 'Kim cương', color: 'bg-blue-500 text-white', cond: 'Từ 15 Triệu', percent: 5 }
         };
 
         const gmt7Formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: 'numeric', day: 'numeric' });
@@ -223,9 +283,15 @@
                 const allMembers = ref([]);
                 const notification = ref(null);
                 
+                const showRegisterModal = ref(false);
+                const registerName = ref('');
+                const isRegistering = ref(false);
+
                 const showFeedbackModal = ref(false);
                 const feedbackContent = ref('');
                 const isSubmitting = ref(false);
+
+                const tierBenefits = Object.values(TIERS);
 
                 const notify = (msg, type = 'success') => {
                     notification.value = { msg, type };
@@ -240,20 +306,16 @@
                     return (amount / 1000000).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' triệu';
                 };
 
-                const getDaysDifferenceGMT7 = (dateNow, datePast) => {
-                    try {
-                        const d1Str = gmt7Formatter.format(new Date(dateNow));
-                        const d2Str = gmt7Formatter.format(new Date(datePast));
-                        const d1UTC = new Date(d1Str + ' UTC');
-                        const d2UTC = new Date(d2Str + ' UTC');
-                        return Math.floor((d1UTC - d2UTC) / (1000 * 60 * 60 * 24));
-                    } catch(e) { return 0; }
-                };
-
                 const getDaysRemaining = (date) => {
                     if (!date) return 0;
-                    const daysPassed = getDaysDifferenceGMT7(new Date(), new Date(date));
-                    return Math.max(0, CYCLE_DAYS - daysPassed);
+                    try {
+                        const d1Str = gmt7Formatter.format(new Date());
+                        const d2Str = gmt7Formatter.format(new Date(date));
+                        const d1UTC = new Date(d1Str + ' UTC');
+                        const d2UTC = new Date(d2Str + ' UTC');
+                        const daysPassed = Math.floor((d1UTC - d2UTC) / (1000 * 60 * 60 * 24));
+                        return Math.max(0, CYCLE_DAYS - daysPassed);
+                    } catch(e) { return 0; }
                 };
 
                 const getVisitsThisCycle = (member) => {
@@ -263,30 +325,19 @@
                 };
 
                 onMounted(() => {
-                    // Đăng nhập vô danh để có quyền đọc dữ liệu theo Rule lớp 1
                     onAuthStateChanged(auth, async (u) => {
                         if (!u) {
-                            try {
-                                await signInAnonymously(auth);
-                            } catch (e) {
-                                notify("Lỗi kết nối máy chủ!", "error");
-                                isSystemLoading.value = false;
-                            }
+                            try { await signInAnonymously(auth); } 
+                            catch (e) { notify("Lỗi kết nối máy chủ!", "error"); isSystemLoading.value = false; }
                         } else {
-                            // Tải dữ liệu toàn bộ member và lắng nghe thay đổi
                             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'members'), (snap) => {
                                 allMembers.value = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 isSystemLoading.value = false;
-                                
-                                // Nếu khách đang đăng nhập, cập nhật lại data theo thời gian thực (realtime)
                                 if (customerData.value) {
                                     const updated = allMembers.value.find(m => m.id === customerData.value.id);
-                                    if (updated) {
-                                        customerData.value = updated;
-                                    }
+                                    if (updated) customerData.value = updated;
                                 }
                             }, (error) => {
-                                console.error(error);
                                 notify("Mất mạng hoặc lỗi kết nối!", "error");
                                 isSystemLoading.value = false;
                             });
@@ -294,7 +345,7 @@
                     });
                 });
 
-                watch([customerData, showFeedbackModal, isSystemLoading], () => {
+                watch([customerData, showFeedbackModal, showRegisterModal, isSystemLoading], () => {
                     nextTick(() => lucide.createIcons());
                 });
 
@@ -307,21 +358,52 @@
                     
                     if (found) {
                         customerData.value = found;
-                        phoneInput.value = "";
+                        notify(`Chào mừng ${found.name} trở lại!`);
                     } else {
-                        errorMsg.value = "Số điện thoại chưa được đăng ký thẻ thành viên tại Bò 888!";
+                        showRegisterModal.value = true;
+                    }
+                };
+
+                const handleRegister = async () => {
+                    if (!registerName.value.trim() || !phoneInput.value) return;
+                    isRegistering.value = true;
+                    
+                    try {
+                        const now = new Date().toISOString();
+                        const newMember = {
+                            name: registerName.value.trim(),
+                            phone: phoneInput.value,
+                            points: 0,
+                            spendingLast30Days: 0,
+                            tier: 'NEW',
+                            lastResetDate: now,
+                            history: [],
+                            feedbacks: [],
+                            createdAt: now
+                        };
+
+                        const docRef = await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'members'), newMember);
+                        customerData.value = { id: docRef.id, ...newMember };
+                        
+                        notify('Chào mừng thành viên mới của Bò 888!', 'success');
+                        showRegisterModal.value = false;
+                        registerName.value = '';
+                    } catch (e) {
+                        notify('Lỗi đăng ký, vui lòng thử lại', 'error');
+                    } finally {
+                        isRegistering.value = false;
                     }
                 };
 
                 const logout = () => {
                     customerData.value = null;
+                    phoneInput.value = "";
                     errorMsg.value = "";
                 };
 
                 const submitFeedback = async () => {
                     if (!feedbackContent.value.trim() || !customerData.value) return;
                     isSubmitting.value = true;
-                    
                     const now = new Date().toISOString();
                     const newFb = { date: now, content: feedbackContent.value.trim() };
                     const updatedFeedbacks = [...(customerData.value.feedbacks || []), newFb];
@@ -330,7 +412,6 @@
                         await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'members', customerData.value.id), {
                             feedbacks: updatedFeedbacks
                         });
-                        
                         notify('Cảm ơn bạn đã đóng góp ý kiến!', 'success');
                         showFeedbackModal.value = false;
                         feedbackContent.value = '';
@@ -343,8 +424,9 @@
 
                 return {
                     isSystemLoading, phoneInput, errorMsg, customerData, notification,
+                    showRegisterModal, registerName, isRegistering, tierBenefits,
                     showFeedbackModal, feedbackContent, isSubmitting,
-                    handleLogin, logout, submitFeedback,
+                    handleLogin, handleRegister, logout, submitFeedback,
                     getTierConfigById, formatCurrency, formatSpending, getDaysRemaining, getVisitsThisCycle
                 };
             }
