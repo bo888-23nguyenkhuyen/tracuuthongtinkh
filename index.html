@@ -370,16 +370,27 @@
                     
                     try {
                         const now = new Date().toISOString();
+                        
+                        // Cấu trúc dữ liệu chuẩn khớp 100% với CRM
                         const newMember = {
                             name: registerName.value.trim(),
                             phone: phoneInput.value,
                             points: 0,
                             spendingLast30Days: 0,
+                            totalSpending: 0, // Trường mới
                             tier: 'NEW',
+                            joinDate: now, // Trường chuẩn thay cho createdAt
                             lastResetDate: now,
-                            history: [],
-                            feedbacks: [],
-                            createdAt: now
+                            lastVisitDate: now, // Trường mới
+                            history: [
+                                {
+                                    type: "REGISTER",
+                                    description: "Đăng ký mới",
+                                    date: now,
+                                    amount: 0
+                                }
+                            ],
+                            feedbacks: []
                         };
 
                         const docRef = await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'members'), newMember);
