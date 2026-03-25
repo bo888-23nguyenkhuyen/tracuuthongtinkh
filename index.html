@@ -147,6 +147,20 @@
                         </div>
                         <i data-lucide="chevron-right" class="w-6 h-6 text-slate-500 group-hover:text-white transition-colors"></i>
                     </button>
+
+                    <!-- Nút Google Maps Đánh giá 5 sao -->
+                    <a href="https://maps.app.goo.gl/JZmKTWvSVNtiPcxF9" target="_blank" class="w-full mt-2 bg-white border-2 border-slate-100 text-slate-900 p-6 rounded-[2rem] shadow-lg flex items-center justify-between hover:bg-slate-50 transition-all active:scale-95 group">
+                        <div class="flex items-center gap-4 text-left">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="star" class="w-6 h-6 text-yellow-600 fill-yellow-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-black uppercase tracking-widest text-sm mb-1">Đánh giá 5 sao trên Google</h3>
+                                <p class="text-xs text-slate-400 font-bold">Dành 30 giây tặng Bò 888 5 sao nhé!</p>
+                            </div>
+                        </div>
+                        <i data-lucide="external-link" class="w-6 h-6 text-slate-300 group-hover:text-slate-500 transition-colors"></i>
+                    </a>
                 </div>
             </div>
         </transition>
@@ -377,11 +391,11 @@
                             phone: phoneInput.value,
                             points: 0,
                             spendingLast30Days: 0,
-                            totalSpending: 0, // Trường mới
+                            totalSpending: 0,
                             tier: 'NEW',
-                            joinDate: now, // Trường chuẩn thay cho createdAt
+                            joinDate: now,
                             lastResetDate: now,
-                            lastVisitDate: now, // Trường mới
+                            lastVisitDate: now,
                             history: [
                                 {
                                     type: "REGISTER",
