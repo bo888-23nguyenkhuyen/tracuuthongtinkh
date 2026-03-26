@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #f8fafc; }
-        [v-cloak] { display: none; }
+        [v-cloak] { display: none !important; }
         .rotate-3 { transform: rotate(3deg); }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
@@ -46,9 +46,9 @@
         <!-- MÀN HÌNH TRA CỨU SỐ ĐIỆN THOẠI -->
         <transition name="fade">
             <div v-if="!customerData && !isSystemLoading" class="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 bg-red-800 text-white text-center">
-                <div class="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl mb-8 rotate-3 transition-transform hover:rotate-0 duration-500 overflow-hidden">
-				<img src="https://i.ibb.co/2r6SkFn/logo-888.png" alt="Logo Bò 888" class="w-full h-full object-cover">
-				</div>
+                <div class="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl mb-8 rotate-3">
+                    <span class="text-red-800 font-black text-4xl">888</span>
+                </div>
                 <div class="mb-10">
                     <h2 class="text-3xl font-black uppercase tracking-tighter mb-2">Thành Viên Bò 888</h2>
                     <p class="text-red-100 opacity-80 font-bold text-sm">Nhập số điện thoại để tra cứu hoặc đăng ký</p>
@@ -74,9 +74,9 @@
                 <div class="bg-red-800 pt-12 pb-24 px-6 rounded-b-[3rem] shadow-lg relative z-10">
                     <div class="flex justify-between items-center mb-8">
                         <div class="flex items-center gap-3">
-								<div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 shrink-0 leading-normal overflow-hidden p-1">
-									<img src="https://i.ibb.co/2r6SkFn/logo-888.png" alt="Logo Bò 888" class="w-full h-full object-contain">
-								</div>
+                            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md rotate-3">
+                                <span class="text-red-800 font-black text-lg">888</span>
+                            </div>
                             <span class="text-white font-black tracking-widest uppercase text-sm opacity-80">Bò 888 - 23 Nguyễn Khuyến</span>
                         </div>
                         <button @click="logout" class="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all">
@@ -111,7 +111,7 @@
                         <div class="text-center">
                             <p class="text-xs font-black uppercase text-slate-400 tracking-widest mb-2">Ví điểm hiện tại</p>
                             <p class="text-4xl sm:text-5xl font-black text-red-700 tracking-tighter">{{ formatCurrency(customerData.points) }}<span class="text-xl text-red-500 ml-1">đ</span></p>
-                            <p class="text-[10px] text-slate-400 font-bold mt-2 italic">Dùng điểm này để thanh toán hóa đơn (áp dụng cả Phở/cơm/lẩu)</p>
+                            <p class="text-[10px] text-slate-400 font-bold mt-2 italic">Dùng điểm này để thanh toán hóa đơn tiếp theo (áp dụng cả Phở/cơm/lẩu)</p>
                         </div>
                     </div>
 
