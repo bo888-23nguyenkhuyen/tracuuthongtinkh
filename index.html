@@ -46,8 +46,8 @@
         <!-- MÀN HÌNH TRA CỨU SỐ ĐIỆN THOẠI -->
         <transition name="fade">
             <div v-if="!customerData && !isSystemLoading" class="flex-1 flex flex-col items-center justify-center p-6 sm:p-8 bg-red-800 text-white text-center">
-                <div class="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl mb-8 rotate-3">
-                    <span class="text-red-800 font-black text-4xl">888</span>
+                <div class="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-2xl mb-8 rotate-3 overflow-hidden p-3">
+                    <img src="https://i.ibb.co/2r6SkFn/logo-888.png" alt="Logo Bò 888" class="w-full h-full object-contain">
                 </div>
                 <div class="mb-10">
                     <h2 class="text-3xl font-black uppercase tracking-tighter mb-2">Thành Viên Bò 888</h2>
@@ -74,8 +74,8 @@
                 <div class="bg-red-800 pt-12 pb-24 px-6 rounded-b-[3rem] shadow-lg relative z-10">
                     <div class="flex justify-between items-center mb-8">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md rotate-3">
-                                <span class="text-red-800 font-black text-lg">888</span>
+                            <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-md rotate-3 overflow-hidden p-1.5">
+                                <img src="https://i.ibb.co/2r6SkFn/logo-888.png" alt="Logo Bò 888" class="w-full h-full object-contain">
                             </div>
                             <span class="text-white font-black tracking-widest uppercase text-sm opacity-80">Bò 888 - 23 Nguyễn Khuyến</span>
                         </div>
@@ -111,7 +111,7 @@
                         <div class="text-center">
                             <p class="text-xs font-black uppercase text-slate-400 tracking-widest mb-2">Ví điểm hiện tại</p>
                             <p class="text-4xl sm:text-5xl font-black text-red-700 tracking-tighter">{{ formatCurrency(customerData.points) }}<span class="text-xl text-red-500 ml-1">đ</span></p>
-                            <p class="text-[10px] text-slate-400 font-bold mt-2 italic">Dùng điểm này để thanh toán hóa đơn tiếp theo (áp dụng cả Phở/cơm/lẩu)</p>
+                            <p class="text-[10px] text-slate-400 font-bold mt-2 italic">Dùng điểm này để thanh toán hóa đơn (áp dụng cả Phở/cơm/lẩu)</p>
                         </div>
                     </div>
 
@@ -259,7 +259,8 @@
     <!-- Firebase System -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, doc, updateDoc, onSnapshot, query, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Đã thêm setDoc vào danh sách import
+        import { getFirestore, collection, doc, updateDoc, onSnapshot, query, getDocs, addDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const { createApp, ref, onMounted, nextTick, watch } = Vue;
@@ -384,6 +385,8 @@
                     
                     try {
                         const now = new Date().toISOString();
+                        // Làm sạch số điện thoại để dùng làm ID (chỉ giữ lại số)
+                        const cleanPhoneId = phoneInput.value.replace(/\D/g, "");
                         
                         // Cấu trúc dữ liệu chuẩn khớp 100% với CRM
                         const newMember = {
@@ -407,13 +410,15 @@
                             feedbacks: []
                         };
 
-                        const docRef = await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'members'), newMember);
-                        customerData.value = { id: docRef.id, ...newMember };
+                        // Thay vì addDoc, sử dụng setDoc để chỉ định trực tiếp Document ID là cleanPhoneId
+                        await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'members', cleanPhoneId), newMember);
+                        customerData.value = { id: cleanPhoneId, ...newMember };
                         
                         notify('Chào mừng thành viên mới của Bò 888!', 'success');
                         showRegisterModal.value = false;
                         registerName.value = '';
                     } catch (e) {
+                        console.error("Lỗi khi tạo thành viên:", e);
                         notify('Lỗi đăng ký, vui lòng thử lại', 'error');
                     } finally {
                         isRegistering.value = false;
