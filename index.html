@@ -281,7 +281,7 @@
     <!-- Firebase System -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, doc, updateDoc, onSnapshot, query, getDocs, addDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, updateDoc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const { createApp, ref, onMounted, nextTick, watch } = Vue;
@@ -317,7 +317,6 @@
                 const phoneInput = ref('');
                 const errorMsg = ref('');
                 const customerData = ref(null);
-                const allMembers = ref([]);
                 const notification = ref(null);
                 
                 const showRegisterModal = ref(false);
@@ -332,6 +331,7 @@
                 const hpField = ref('');
 
                 const tierBenefits = Object.values(TIERS);
+                let unsubscribeSnapshot = null; // Biến lưu trữ listener realtime cho 1 khách hàng
 
                 const notify = (msg, type = 'success') => {
                     notification.value = { msg, type };
@@ -383,17 +383,8 @@
                             try { await signInAnonymously(auth); } 
                             catch (e) { notify("Lỗi kết nối máy chủ!", "error"); isSystemLoading.value = false; }
                         } else {
-                            onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'members'), (snap) => {
-                                allMembers.value = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                                isSystemLoading.value = false;
-                                if (customerData.value) {
-                                    const updated = allMembers.value.find(m => m.id === customerData.value.id);
-                                    if (updated) customerData.value = updated;
-                                }
-                            }, (error) => {
-                                notify("Mất mạng hoặc lỗi kết nối!", "error");
-                                isSystemLoading.value = false;
-                            });
+                            // Bỏ tải dữ liệu toàn bộ quán, tắt loading ngay
+                            isSystemLoading.value = false;
                         }
                     });
                 });
@@ -402,7 +393,7 @@
                     nextTick(() => lucide.createIcons());
                 });
 
-                const handleLogin = () => {
+                const handleLogin = async () => {
                     // KIỂM TRA HONEYPOT
                     if (hpField.value) {
                         console.warn("Bot detected via honeypot (Login)");
@@ -416,13 +407,32 @@
                     if (!phoneInput.value) return;
                     
                     const cleanPhone = phoneInput.value.replace(/\D/g, "");
-                    const found = allMembers.value.find(m => (m.phone || "").replace(/\D/g, "") === cleanPhone);
+                    isSystemLoading.value = true;
                     
-                    if (found) {
-                        customerData.value = found;
-                        notify(`Chào mừng ${found.name} trở lại!`);
-                    } else {
-                        showRegisterModal.value = true;
+                    try {
+                        // Truy vấn chỉ 1 số điện thoại duy nhất
+                        const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'members', cleanPhone);
+                        const docSnap = await getDoc(docRef);
+
+                        if (docSnap.exists() && !docSnap.data().isDeleted) {
+                            customerData.value = { id: docSnap.id, ...docSnap.data() };
+                            notify(`Chào mừng ${customerData.value.name} trở lại!`);
+                            
+                            // Bật tính năng Realtime riêng cho khách hàng này (Điểm tự động nhảy)
+                            if(unsubscribeSnapshot) unsubscribeSnapshot();
+                            unsubscribeSnapshot = onSnapshot(docRef, (snap) => {
+                                if(snap.exists() && !snap.data().isDeleted) {
+                                    customerData.value = { id: snap.id, ...snap.data() };
+                                }
+                            });
+                        } else {
+                            showRegisterModal.value = true;
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        errorMsg.value = "Lỗi kết nối máy chủ, vui lòng thử lại!";
+                    } finally {
+                        isSystemLoading.value = false;
                     }
                 };
 
@@ -467,6 +477,15 @@
                         await setDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'members', cleanPhoneId), newMember);
                         customerData.value = { id: cleanPhoneId, ...newMember };
                         
+                        // Bật tính năng Realtime sau khi đăng ký
+                        if(unsubscribeSnapshot) unsubscribeSnapshot();
+                        const docRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'members', cleanPhoneId);
+                        unsubscribeSnapshot = onSnapshot(docRef, (snap) => {
+                            if(snap.exists() && !snap.data().isDeleted) {
+                                customerData.value = { id: snap.id, ...snap.data() };
+                            }
+                        });
+                        
                         notify('Chào mừng thành viên mới của Bò 888!', 'success');
                         showRegisterModal.value = false;
                         registerName.value = '';
@@ -479,6 +498,11 @@
                 };
 
                 const logout = () => {
+                    // Hủy lắng nghe realtime khi thoát để tiết kiệm băng thông
+                    if(unsubscribeSnapshot) {
+                        unsubscribeSnapshot();
+                        unsubscribeSnapshot = null;
+                    }
                     customerData.value = null;
                     phoneInput.value = "";
                     errorMsg.value = "";
