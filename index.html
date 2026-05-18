@@ -131,6 +131,32 @@
                         </div>
                     </div>
 
+                    <!-- Ô Ví Trả Trước (Đã chỉnh sửa số tiền nằm riêng một hàng tránh đè chữ) -->
+                    <div class="bg-emerald-50 border-2 border-emerald-100 rounded-[2.5rem] p-6 shadow-xl relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 text-emerald-100 opacity-20 pointer-events-none">
+                            <i data-lucide="wallet" class="w-24 h-24"></i>
+                        </div>
+                        
+                        <!-- Header ví trả trước -->
+                        <div class="flex items-center gap-3 pb-4 mb-4 border-b border-emerald-100 relative z-10">
+                            <div class="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center shadow-md shrink-0">
+                                <i data-lucide="wallet" class="w-5 h-5"></i>
+                            </div>
+                            <div class="text-left">
+                                <h4 class="text-[10px] font-black uppercase text-slate-500 tracking-wider">Ví Trả Trước</h4>
+                                <p class="text-[10px] text-slate-500 font-semibold mt-0.5">Tự động trừ khi thanh toán</p>
+                            </div>
+                        </div>
+
+                        <!-- Số dư khả dụng (Nằm hẳn một hàng riêng biệt ở giữa cực kì rõ nét) -->
+                        <div class="text-center relative z-10">
+                            <p class="text-xs font-black uppercase text-emerald-600 tracking-widest mb-1">Số dư khả dụng</p>
+                            <p class="text-4xl sm:text-5xl font-black text-emerald-700 tracking-tighter">
+                                {{ formatCurrency(customerData.prepaidBalance || 0) }}<span class="text-xl text-emerald-600 ml-1 font-bold">đ</span>
+                            </p>
+                        </div>
+                    </div>
+
                     <!-- Thẻ Theo dõi Chu kỳ -->
                     <div class="grid grid-cols-2 gap-4">
                         <div class="bg-blue-50 border border-blue-100 p-5 rounded-[2rem] flex flex-col justify-center items-center text-center">
@@ -457,6 +483,7 @@
                             name: registerName.value.trim(),
                             phone: phoneInput.value,
                             points: 0,
+                            prepaidBalance: 0, // Khởi tạo ví trả trước mặc định bằng 0đ
                             spendingLast30Days: 0,
                             totalSpending: 0,
                             tier: 'NEW',
