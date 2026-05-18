@@ -131,7 +131,7 @@
                         </div>
                     </div>
 
-                    <!-- Ô Ví Trả Trước (Đã chỉnh sửa số tiền nằm riêng một hàng tránh đè chữ) -->
+                    <!-- Ô Ví Trả Trước -->
                     <div class="bg-emerald-50 border-2 border-emerald-100 rounded-[2.5rem] p-6 shadow-xl relative overflow-hidden">
                         <div class="absolute -right-4 -bottom-4 text-emerald-100 opacity-20 pointer-events-none">
                             <i data-lucide="wallet" class="w-24 h-24"></i>
@@ -148,7 +148,7 @@
                             </div>
                         </div>
 
-                        <!-- Số dư khả dụng (Nằm hẳn một hàng riêng biệt ở giữa cực kì rõ nét) -->
+                        <!-- Số dư khả dụng -->
                         <div class="text-center relative z-10">
                             <p class="text-xs font-black uppercase text-emerald-600 tracking-widest mb-1">Số dư khả dụng</p>
                             <p class="text-4xl sm:text-5xl font-black text-emerald-700 tracking-tighter">
@@ -175,6 +175,20 @@
                             <p class="font-black text-purple-700 text-xl">{{ getVisitsThisCycle(customerData) }} lần <span class="text-xs font-bold opacity-70">/ Chu kỳ</span></p>
                         </div>
                     </div>
+
+                    <!-- Nút Lịch sử hoạt động (Bổ sung mới nằm ngay trên nút góp ý) -->
+                    <button @click="showHistoryModal = true" class="w-full mt-4 bg-white border-2 border-slate-100 text-slate-900 p-6 rounded-[2rem] shadow-lg flex items-center justify-between hover:bg-slate-50 transition-all active:scale-95 group">
+                        <div class="flex items-center gap-4 text-left">
+                            <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="history" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-black uppercase tracking-widest text-sm mb-1">Lịch sử hoạt động</h3>
+                                <p class="text-xs text-slate-400 font-bold">Xem tích điểm, dùng ví & chi tiêu</p>
+                            </div>
+                        </div>
+                        <i data-lucide="chevron-right" class="w-6 h-6 text-slate-300 group-hover:text-slate-500 transition-colors"></i>
+                    </button>
 
                     <!-- Nút Góp ý -->
                     <button @click="showFeedbackModal = true" class="w-full mt-4 bg-slate-900 text-white p-6 rounded-[2rem] shadow-xl flex items-center justify-between hover:bg-black transition-all active:scale-95 group">
@@ -302,6 +316,56 @@
             </div>
         </transition>
 
+        <!-- MODAL LỊCH SỬ GIAO DỊCH (Bổ sung mới) -->
+        <transition name="fade">
+            <div v-if="showHistoryModal" class="fixed inset-0 z-[500] flex flex-col justify-end bg-slate-900/85 backdrop-blur-sm">
+                <div class="bg-white w-full rounded-t-[3rem] p-6 pb-10 sm:p-8 animate-in slide-in-from-bottom-full duration-300 relative flex flex-col max-h-[85vh]">
+                    <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6 shrink-0"></div>
+                    <button @click="showHistoryModal = false" class="absolute top-6 right-6 p-2 bg-slate-100 rounded-full text-slate-500 hover:text-slate-800 shrink-0">
+                        <i data-lucide="x" class="w-5 h-5 font-black"></i>
+                    </button>
+                    
+                    <div class="flex items-center gap-4 mb-6 shrink-0">
+                        <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-[1.2rem] flex items-center justify-center rotate-3">
+                            <i data-lucide="history" class="w-6 h-6 font-black"></i>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-black text-xl text-slate-800 uppercase tracking-tighter">Lịch Sử Hoạt Động</h3>
+                            <p class="text-xs font-bold text-slate-400">Nhật ký tích điểm, dùng ví & thăng hạng</p>
+                        </div>
+                    </div>
+
+                    <!-- Danh sách giao dịch cuộn mượt -->
+                    <div class="flex-1 overflow-y-auto scroll-hide space-y-4 pr-1 min-h-[300px] pb-6">
+                        <div v-if="!customerData?.history || customerData.history.length === 0" class="text-center py-12 text-slate-400 font-bold italic">
+                            Chưa có dữ liệu hoạt động nào được ghi nhận.
+                        </div>
+                        <div v-else v-for="(log, idx) in sortedHistory" :key="idx" class="bg-slate-50 p-5 rounded-[1.8rem] border border-slate-100 text-left relative overflow-hidden">
+                            <div class="flex justify-between items-center mb-2 gap-2">
+                                <span :class="getLogBadgeClass(log.type)" class="px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider">
+                                    {{ getLogTypeName(log.type) }}
+                                </span>
+                                <span class="text-[10px] text-slate-400 font-bold">
+                                    {{ formatDateShort(log.date) }}
+                                </span>
+                            </div>
+                            <p class="text-slate-700 font-bold text-sm leading-snug">
+                                {{ log.description }}
+                            </p>
+                            
+                            <!-- Biến động điểm số (nếu có) -->
+                            <div v-if="log.amount !== undefined && log.amount !== 0" class="mt-3 pt-3 border-t border-dashed border-slate-200/80 flex items-center justify-between">
+                                <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider">Thay đổi ví điểm</span>
+                                <span :class="log.amount > 0 ? 'text-emerald-600' : 'text-red-500'" class="font-black text-sm">
+                                    {{ log.amount > 0 ? '+' : '' }}{{ formatCurrency(log.amount) }}đ
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
     </div>
 
     <!-- Firebase System -->
@@ -310,7 +374,7 @@
         import { getFirestore, doc, updateDoc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        const { createApp, ref, onMounted, nextTick, watch } = Vue;
+        const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
 
         const firebaseConfig = {
             apiKey: "AIzaSyBnQtUo1Nxq3YDxXp_2P4L1Beqv5JHAYPE",
@@ -336,6 +400,16 @@
         };
 
         const gmt7Formatter = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: 'numeric', day: 'numeric' });
+        
+        // Cấu hình định dạng thời gian chi tiết
+        const shortDateFormatter = new Intl.DateTimeFormat('vi-VN', {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
 
         createApp({
             setup() {
@@ -352,6 +426,9 @@
                 const showFeedbackModal = ref(false);
                 const feedbackContent = ref('');
                 const isSubmitting = ref(false);
+
+                // Modal lịch sử hoạt động
+                const showHistoryModal = ref(false);
 
                 // Biến Honeypot
                 const hpField = ref('');
@@ -403,19 +480,56 @@
                     return member.history.filter(log => log.type === 'BILL' && new Date(log.date).getTime() >= resetDate).length;
                 };
 
+                // Sắp xếp lịch sử hoạt động từ mới nhất -> cũ nhất
+                const sortedHistory = computed(() => {
+                    if (!customerData.value || !customerData.value.history) return [];
+                    return [...customerData.value.history].reverse();
+                });
+
+                const formatDateShort = (iso) => {
+                    if (!iso) return '---';
+                    try {
+                        return shortDateFormatter.format(new Date(iso));
+                    } catch (e) {
+                        return '---';
+                    }
+                };
+
+                const getLogTypeName = (type) => {
+                    const types = {
+                        'REGISTER': 'Đăng ký',
+                        'BILL': 'Hóa đơn',
+                        'IMPORT': 'Khôi phục',
+                        'CYCLE_RESET': 'Chu kỳ mới',
+                        'MANUAL_ADJUST': 'Điều chỉnh',
+                        'MANUAL': 'Điều chỉnh',
+                        'MANUAL_ADJUSTMENT': 'Điều chỉnh',
+                        'PREPAID_ADJUST': 'Nạp ví',
+                        'PREPAID_BILL_DEDUCTION': 'Khấu trừ',
+                        'EDIT_INFO': 'Sửa thông tin'
+                    };
+                    return types[type] || 'Giao dịch';
+                };
+
+                const getLogBadgeClass = (type) => {
+                    if (type === 'REGISTER' || type === 'IMPORT') return 'bg-blue-50 text-blue-600 border border-blue-100';
+                    if (type === 'PREPAID_ADJUST' || type?.includes('EARN') || type === 'MANUAL_ADJUST') return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
+                    if (type === 'BILL' || type === 'PREPAID_BILL_DEDUCTION' || type === 'CYCLE_RESET') return 'bg-red-50 text-red-600 border border-red-100';
+                    return 'bg-slate-100 text-slate-600 border border-slate-200';
+                };
+
                 onMounted(() => {
                     onAuthStateChanged(auth, async (u) => {
                         if (!u) {
                             try { await signInAnonymously(auth); } 
                             catch (e) { notify("Lỗi kết nối máy chủ!", "error"); isSystemLoading.value = false; }
                         } else {
-                            // Bỏ tải dữ liệu toàn bộ quán, tắt loading ngay
                             isSystemLoading.value = false;
                         }
                     });
                 });
 
-                watch([customerData, showFeedbackModal, showRegisterModal, isSystemLoading], () => {
+                watch([customerData, showFeedbackModal, showRegisterModal, isSystemLoading, showHistoryModal], () => {
                     nextTick(() => lucide.createIcons());
                 });
 
@@ -566,6 +680,7 @@
                     isSystemLoading, phoneInput, errorMsg, customerData, notification,
                     showRegisterModal, registerName, isRegistering, tierBenefits,
                     showFeedbackModal, feedbackContent, isSubmitting, hpField,
+                    showHistoryModal, sortedHistory, formatDateShort, getLogTypeName, getLogBadgeClass,
                     handleLogin, handleRegister, logout, submitFeedback,
                     getTierConfigById, formatCurrency, formatSpending, getDaysRemaining, getVisitsThisCycle
                 };
